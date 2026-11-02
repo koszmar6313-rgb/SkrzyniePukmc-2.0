@@ -1,0 +1,90 @@
+wiadomosci:
+  prefix: '&fSkrzynie &7» '
+  brak-uprawnien: '&cNie masz uprawnień.'
+  nie-ma-skrzynki: '&cNie ma takiej skrzyni.'
+
+skrzynie:
+  legendarna:
+    nazwa: '&e&lLegendarna skrzynia'
+    tytul: '&0Legendarna skrzynia'
+    rozmiar: 54
+    slot-klucza: 49
+    klucz:
+      material: TRIPWIRE_HOOK
+      model: 1007
+      nazwa: '&e&lKLUCZ DO SKRZYNI LEGENDARNEJ!'
+      opis:
+        - '&7» &fOtwierając ten klucz otrzymasz &eepickie &fprzedmioty'
+        - '&7» &fKlucz otworzysz na &e/spawn &flub komendą'
+        - '&7» &e/otworzskrzynie legendarna'
+    nagrody:
+      diamenty:
+        szansa: 10
+        slot: 13
+        przedmiot:
+          material: DIAMOND
+          ilosc: 8
+          nazwa: '&bDiamenty'
+  epicka:
+    nazwa: '&e&lEpicka skrzynia'
+    tytul: '&0Epicka skrzynia'
+    rozmiar: 54
+    slot-klucza: 49
+    klucz:
+      material: TRIPWIRE_HOOK
+      model: 1008
+      nazwa: '&e&lKLUCZ DO SKRZYNI EPICKIEJ!'
+      opis:
+        - '&7» &fOtwierając ten klucz otrzymasz &eepickie &fprzedmioty'
+        - '&7» &fKlucz otworzysz na &e/spawn &flub komendą'
+        - '&7» &e/otworzskrzynie epicka'
+    nagrody:
+      emeraldy:
+        szansa: 10
+        slot: 13
+        przedmiot:
+          material: EMERALD
+          ilosc: 16
+          nazwa: '&aSzmaragdy'
+  rzadka:
+    nazwa: '&a&lRzadka skrzynia'
+    tytul: '&0Rzadka skrzynia'
+    rozmiar: 54
+    slot-klucza: 49
+    klucz:
+      material: TRIPWIRE_HOOK
+      model: 1009
+      nazwa: '&a&lKLUCZ DO SKRZYNI RZADKIEJ!'
+      opis:
+        - '&7» &fOtwierając ten klucz otrzymasz &arzadkie &fprzedmioty'
+        - '&7» &fKlucz otworzysz na &e/spawn &flub komendą'
+        - '&7» &e/otworzskrzynie rzadka'
+    nagrody:
+      zloto:
+        szansa: 10
+        slot: 13
+        przedmiot:
+          material: GOLD_INGOT
+          ilosc: 8
+          nazwa: '&6Złoto'
+  afk:
+    nazwa: '&b&lSkrzynia AFK'
+    tytul: '&0Skrzynia AFK'
+    rozmiar: 54
+    slot-klucza: 49
+    klucz:
+      material: TRIPWIRE_HOOK
+      model: 1010
+      nazwa: '&b&lKLUCZ DO SKRZYNI AFK!'
+      opis:
+        - '&7» &fOtwierając ten klucz otrzymasz &bprzedmioty AFK'
+        - '&7» &fKlucz otworzysz na &e/spawn &flub komendą'
+        - '&7» &e/otworzskrzynie afk'
+    nagrody:
+      zelazo:
+        szansa: 10
+        slot: 13
+        przedmiot:
+          material: IRON_INGOT
+          ilosc: 16
+          nazwa: '&fŻelazo'

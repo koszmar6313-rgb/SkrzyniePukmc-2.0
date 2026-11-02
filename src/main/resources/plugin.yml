@@ -1,0 +1,22 @@
+name: Skrzynki
+version: '1.1.0'
+main: pl.skrzynki.Skrzynki
+api-version: '1.21'
+description: Skrzynki, klucze, edytor nagrod i lokalizacje
+commands:
+  skrzynka:
+    description: Glowna komenda skrzynek
+    aliases: [skrzynki, skrzynia]
+  stworzskrzynie:
+    description: Tworzy skrzynie o wybranym kolorze
+  skrzynia-edit:
+    description: Edytuje nagrody i szanse skrzyni
+  skrzynia-ustawlokalizacje:
+    description: Ustawia blok otwierania skrzyni
+  otworzskrzynie:
+    description: Otwiera menu skrzyni
+permissions:
+  skrzynki.uzyj:
+    default: true
+  skrzynki.admin:
+    default: op

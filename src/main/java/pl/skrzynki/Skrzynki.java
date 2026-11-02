@@ -1,0 +1,51 @@
+package pl.skrzynki;
+
+import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.command.*;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
+import org.bukkit.event.*;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.NamespacedKey;
+import java.util.*;
+
+public final class Skrzynki extends JavaPlugin implements Listener, CommandExecutor {
+    private final Map<UUID,String> settingLocation = new HashMap<>();
+    private final Map<UUID,String> editing = new HashMap<>();
+    private NamespacedKey keyTag;
+    private static final String PREFIX = "&fSkrzynie &7» ";
+
+    @Override public void onEnable() {
+        saveDefaultConfig(); keyTag = new NamespacedKey(this,"crate_key");
+        for (String c : List.of("skrzynka","stworzskrzynie","skrzynia-edit","skrzynia-ustawlokalizacje","otworzskrzynie")) getCommand(c).setExecutor(this);
+        getServer().getPluginManager().registerEvents(this,this);
+    }
+    private String color(String s) { return ChatColor.translateAlternateColorCodes('&', s == null ? "" : s.replace("#", "#")); }
+    private void msg(CommandSender s,String m){s.sendMessage(color(PREFIX+m));}
+    private boolean admin(CommandSender s){if(s.hasPermission("skrzynki.admin"))return true;msg(s,"&cNie masz uprawnień.");return false;}
+    private String norm(String s){return s.toLowerCase(Locale.ROOT).replace(' ','_');}
+    private ConfigurationSection crates(){ConfigurationSection c=getConfig().getConfigurationSection("skrzynie");if(c==null)c=getConfig().createSection("skrzynie");return c;}
+    private String colorCode(String n){return switch(n){case "0"->"&0";case "1"->"&1";case "2"->"&2";case "3"->"&3";case "4"->"&4";case "5"->"&5";case "6"->"&6";case "7"->"&7";case "8"->"&8";case "9"->"&9";case "a"->"&a";case "b"->"&b";case "c"->"&c";case "d"->"&d";case "e"->"&e";case "f"->"&f";default->null;};}
+    @Override public boolean onCommand(CommandSender sender,Command command,String label,String[] a){String cmd=command.getName().toLowerCase(Locale.ROOT);
+      if(cmd.equals("stworzskrzynie")){if(!admin(sender))return true;if(a.length<2){msg(sender,"&cUżycie: /stworzskrzynie <nazwa> <kolor 0-9/a-f>");return true;}String id=norm(a[0]),cc=colorCode(a[1]);if(cc==null){msg(sender,"&cNieprawidłowy kolor. Użyj 0-9 albo a-f.");return true;}if(crates().contains(id)){msg(sender,"&cSkrzynia o tej nazwie już istnieje.");return true;}ConfigurationSection c=crates().createSection(id);c.set("nazwa",cc+"&l"+a[0]);c.set("tytul", "&0"+a[0]);c.set("tytul-animacji","&0Losowanie...");c.set("rozmiar",54);c.set("klucz.material","TRIPWIRE_HOOK");c.set("klucz.model",1007);c.set("klucz.nazwa",cc+"&lKLUCZ DO SKRZYNI "+a[0].toUpperCase(Locale.ROOT)+"!");c.set("klucz.opis",List.of("&7» &fOtwierając ten klucz otrzymasz "+cc+"przedmioty","&7» &fKlucz otworzysz na &e/spawn &flub komendą","&7» &e/otworzskrzynie "+id));c.set("slot-klucza",49);c.set("sloty-animacji",List.of(45,46,47));c.set("sloty-szybkie",List.of(51,52,53));c.set("nagrody.przykladowa.szansa",100);c.set("nagrody.przykladowa.slot",13);c.set("nagrody.przykladowa.przedmiot.material","DIAMOND");c.set("nagrody.przykladowa.przedmiot.ilosc",1);c.set("nagrody.przykladowa.przedmiot.nazwa",cc+"Przykładowa nagroda");saveConfig();msg(sender,"&aUtworzono skrzynię &f"+a[0]+" &az kolorem &f"+a[1]+"&a. Edytuj nagrody: /skrzynia-edit "+id);return true;}
+      if(cmd.equals("skrzynia-ustawlokalizacje")){if(!admin(sender))return true;if(!(sender instanceof Player p)){msg(sender,"&cTylko gracz może użyć tej komendy.");return true;}if(a.length<1||!crates().contains(norm(a[0]))){msg(sender,"&cUżycie: /skrzynia-ustawlokalizacje <nazwa>");return true;}settingLocation.put(p.getUniqueId(),norm(a[0]));msg(p,"&aKliknij blok, który ma otwierać skrzynię &e"+a[0]+"&a.");return true;}
+      if(cmd.equals("skrzynia-edit")){if(!admin(sender))return true;if(a.length<1||!crates().contains(norm(a[0]))){msg(sender,"&cUżycie: /skrzynia-edit <nazwa>");return true;}if(!(sender instanceof Player p)){msg(sender,"&cTylko gracz może użyć tej komendy.");return true;}openEditor(p,norm(a[0]));return true;}
+      if(cmd.equals("otworzskrzynie")){if(!(sender instanceof Player p)){msg(sender,"&cTylko gracz może użyć tej komendy.");return true;}if(a.length<1){msg(p,"&cUżycie: /otworzskrzynie <nazwa>");return true;}openCrate(p,norm(a[0]));return true;}
+      if(cmd.equals("skrzynka")){if(a.length>=2&&a[0].equalsIgnoreCase("otworz")){if(sender instanceof Player p)openCrate(p,norm(a[1]));return true;}if(a.length>=1&&a[0].equalsIgnoreCase("przeladuj")){if(!admin(sender))return true;reloadConfig();msg(sender,"&aPrzeładowano konfigurację.");return true;}if(sender instanceof Player p)p.openInventory(mainMenu());else msg(sender,"&cTylko gracz może otworzyć menu.");return true;}return false;}
+
+    private ItemStack makeItem(String material,String name,List<String> lore,int amount){Material m=Material.matchMaterial(material==null?"STONE":material);if(m==null)m=Material.STONE;ItemStack i=new ItemStack(m,Math.max(1,Math.min(64,amount)));ItemMeta meta=i.getItemMeta();if(name!=null)meta.setDisplayName(color(name));if(lore!=null)meta.setLore(lore.stream().map(this::color).toList());i.setItemMeta(meta);return i;}
+    private Inventory mainMenu(){Inventory inv=Bukkit.createInventory(null,27,color("&8Skrzynie"));int slot=10;for(String id:crates().getKeys(false)){if(slot>16)break;ConfigurationSection c=crates().getConfigurationSection(id);inv.setItem(slot++,makeItem("CHEST",c.getString("nazwa",id),List.of("&7Kliknij, aby zobaczyć skrzynię"),1));}return inv;}
+    private void openCrate(Player p,String id){ConfigurationSection c=crates().getConfigurationSection(id);if(c==null){msg(p,"&cNie ma takiej skrzyni.");return;}int size=c.getInt("rozmiar",54);Inventory inv=Bukkit.createInventory(new CrateHolder(id),size,color(c.getString("tytul","&0Skrzynia")));ConfigurationSection rewards=c.getConfigurationSection("nagrody");if(rewards!=null)for(String r:rewards.getKeys(false)){ConfigurationSection rs=rewards.getConfigurationSection(r);if(rs==null)continue;ConfigurationSection it=rs.getConfigurationSection("przedmiot");if(it==null)continue;ItemStack item=makeItem(it.getString("material","STONE"),it.getString("nazwa",r),it.getStringList("opis"),it.getInt("ilosc",1));ItemMeta meta=item.getItemMeta();List<String> lore=meta.hasLore()?new ArrayList<>(meta.getLore()):new ArrayList<>();lore.add(color("&7Szansa: &e"+rs.getDouble("szansa",1)));meta.setLore(lore);item.setItemMeta(meta);int s=rs.getInt("slot",-1);if(s>=0&&s<size)inv.setItem(s,item);}ItemStack key=makeItem(c.getString("klucz.material","TRIPWIRE_HOOK"),c.getString("klucz.nazwa","&eKlucz"),c.getStringList("klucz.opis"),1);ItemMeta km=key.getItemMeta();km.getPersistentDataContainer().set(keyTag,PersistentDataType.STRING,id);key.setItemMeta(km);int ks=c.getInt("slot-klucza",49);if(ks<size)inv.setItem(ks,key);p.openInventory(inv);}
+    private void openEditor(Player p,String id){editing.put(p.getUniqueId(),id);ConfigurationSection c=crates().getConfigurationSection(id);Inventory inv=Bukkit.createInventory(new EditorHolder(id),54,color("&8Edytor: "+c.getString("nazwa",id)));ConfigurationSection rs=c.getConfigurationSection("nagrody");if(rs!=null){int slot=0;for(String r:rs.getKeys(false)){if(slot>=45)break;ConfigurationSection reward=rs.getConfigurationSection(r);ConfigurationSection it=reward.getConfigurationSection("przedmiot");if(it!=null){ItemStack item=makeItem(it.getString("material","STONE"),it.getString("nazwa",r),List.of("&7Nagroda: &f"+r,"&7Szansa/waga: &e"+reward.getDouble("szansa",1),"&aKliknij, aby zwiększyć szansę o 1","&cShift+klik, aby zmniejszyć szansę o 1"),it.getInt("ilosc",1));inv.setItem(slot++,item);}}}inv.setItem(49,makeItem("BARRIER","&cZamknij edytor",List.of("&7Zmiany zapisują się automatycznie"),1));p.openInventory(inv);msg(p,"&7Kliknięcie nagrody zmienia jej wagę; SHIFT+klik zmniejsza wagę.");}
+    @EventHandler public void onInteract(PlayerInteractEvent e){if(e.getAction()!=Action.RIGHT_CLICK_BLOCK||e.getClickedBlock()==null)return;Player p=e.getPlayer();String id=settingLocation.get(p.getUniqueId());if(id!=null){e.setCancelled(true);Block b=e.getClickedBlock();String loc=b.getWorld().getName()+","+b.getX()+","+b.getY()+","+b.getZ();getConfig().set("skrzynie."+id+".lokalizacja",loc);saveConfig();settingLocation.remove(p.getUniqueId());msg(p,"&aUstawiono lokalizację skrzyni &e"+id+"&a.");return;}String loc=e.getClickedBlock().getWorld().getName()+","+e.getClickedBlock().getX()+","+e.getClickedBlock().getY()+","+e.getClickedBlock().getZ();for(String crate:crates().getKeys(false))if(loc.equals(getConfig().getString("skrzynie."+crate+".lokalizacja"))){e.setCancelled(true);openCrate(p,crate);return;}}
+    @EventHandler public void onClick(InventoryClickEvent e){if(e.getView().getTopInventory().getHolder() instanceof EditorHolder holder){e.setCancelled(true);if(!(e.getWhoClicked() instanceof Player p))return;int slot=e.getRawSlot();if(slot<0||slot>=45)return;ConfigurationSection rs=crates().getConfigurationSection(holder.id+".nagrody");if(rs==null)return;int idx=0;for(String r:rs.getKeys(false)){ConfigurationSection reward=rs.getConfigurationSection(r);ConfigurationSection it=reward.getConfigurationSection("przedmiot");if(it==null)continue;if(idx++==slot){double chance=reward.getDouble("szansa",1);chance=e.isShiftClick()?Math.max(0,chance-1):chance+1;reward.set("szansa",chance);saveConfig();openEditor(p,holder.id);msg(p,"&aSzansa nagrody &f"+r+" &ato teraz &e"+chance+"&a.");return;}}}else if(e.getView().getTopInventory().getHolder() instanceof CrateHolder){e.setCancelled(true);}}
+    private static final class CrateHolder implements InventoryHolder{final String id;CrateHolder(String id){this.id=id;}public Inventory getInventory(){return null;}}
+    private static final class EditorHolder implements InventoryHolder{final String id;EditorHolder(String id){this.id=id;}public Inventory getInventory(){return null;}}
+}
